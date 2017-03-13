@@ -14,14 +14,21 @@
 #include "Window.h"
 #include "Movable.h"
 
+#define ZOMBIE_VELOCITY 200
+#define ZOMBIE_INIT_HP  100
 const int ZOMBIE_HEIGHT = 125;
 const int ZOMBIE_WIDTH = 75;
 
-
+typedef enum {
+    IDLE,
+    MOVE,
+    ATTACK,
+    DIE
+} ZOMBIE_STATE;
 
 class Zombie : public Movable {
 public:
-    Zombie(int health = 100, int state = 0);
+    Zombie(int hp = ZOMBIE_INIT_HP, ZOMBIE_STATE state = IDLE);
     virtual ~Zombie();
 
 	void onCollision();
@@ -48,21 +55,21 @@ public:
 
     void setPath(std::string pth);  // set path
 
-    int getDir();                   // get move direction
+    int getMoveDir();               // get move direction
 
-    bool checkBound(float x, float y);  // boundary checks
+    bool checkBounds(const float& x, const float& y) const;  // boundary checks
     // A* path
     std::string generatePath(const int& xStart, const int& yStart,
                              const int& xDest, const int& yDest);
 
 private:
-    int health;         // health of zombie
-    int state;          // used to select sprite to display
-    std::string path;   // A* path zombie should follow
+    int hp;             // health points of zombie
     int step;           // Number of steps zombie has taken in path
-    bool moving;        // Whether or not zombie is moving
+    //bool moving;      // Whether or not zombie is moving
+    std::string path;   // A* path zombie should follow
     float endX;         // X coordinate of the end of a step
     float endY;         // Y coordinate of the end of a step
+    ZOMBIE_STATE state; // 0 - idle, 1 - move, 2 - attack, 3 - die
 };
 
 #endif

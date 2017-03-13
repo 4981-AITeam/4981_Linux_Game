@@ -1,14 +1,9 @@
 #include "Node.h"
 #include "Zombie.h"
-#include <math.h>
-#include <random>
 #include <utility>
 using namespace std;
 
-#define PI 3.14159265
-#define ZOMBIE_VELOCITY 200
-
-Zombie::Zombie(int health, int state) : Movable(ZOMBIE_VELOCITY), health(health), state(state), moving(true) {
+Zombie::Zombie(int hp, ZOMBIE_STATE state) : Movable(ZOMBIE_VELOCITY), hp(hp), state(state) {
     setAngle(0); //Totally arbitrary right now
     printf("Create Zombie\n");
 }
@@ -68,15 +63,14 @@ float Zombie::getEndX() {
  * Fred Yang
  * February 14
  */
-int Zombie::getDir() {
+int Zombie::getMoveDir() {
     int sp = this->getStep();
     string pth = this->getPath();
-    //char c = pth.at(sp);
     return (sp < (int) pth.length() ? stoi(pth.substr(sp,1)) : -1);
 }
 
 /**
- * Set the A* path
+ * Set A* path
  * Fred Yang
  * Feb 14
  */
@@ -85,7 +79,7 @@ void Zombie::setPath(string pth) {
 }
 
 /**
- * Get the A* path
+ * Get A* path
  * Fred Yang
  * Feb 14
  */string Zombie::getPath() {
@@ -97,16 +91,17 @@ void Zombie::onCollision() {
 }
 
 void Zombie::collidingProjectile(int damage) {
-    health = health - damage;
+    hp -= damage;
 }
 
 /*
  * Returns if the zombie is moving
- * Robert Arendac
+ * Robert Arendac, Fred Yang
  * March 7
 */
 bool Zombie::isMoving() {
-    return moving;
+    // moving
+    return (state == MOVE);
 }
 
 /*
@@ -122,9 +117,7 @@ void Zombie::checkMove() {
 
     // Check if the current coordinates are close to the end coordinates
     if ((curX < endX + 10 && curX > endX - 10) && (curY < endY + 10 && curY > endY - 10)) {
-        moving = true;
-    } else {
-        moving = false;
+        state = MOVE;
     }
 }
 
@@ -134,7 +127,7 @@ void Zombie::checkMove() {
  * Feb - Ongoing
 */
 void Zombie::generateMove() {
-    int d = getDir();       //Direction zombie is moving
+    int d = getMoveDir();   //Direction zombie is moving
     float startX = getX();
     float startY = getY();
 
@@ -146,7 +139,7 @@ void Zombie::generateMove() {
     // Each case will check if the zombie is within bounds before moving
     switch(d) {
         case DIR_R:
-            if (checkBound(startX + STEP_SPAN, startY)) {
+            if (checkBounds(startX + STEP_SPAN, startY)) {
                 setDX(STEP_SPAN);
                 setDY(0);
                 step++;
@@ -155,7 +148,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_RD:
-            if (checkBound(startX + STEP_SPAN, startY + STEP_SPAN)) {
+            if (checkBounds(startX + STEP_SPAN, startY + STEP_SPAN)) {
                 setDX(STEP_SPAN);
                 setDY(STEP_SPAN);
                 step++;
@@ -165,7 +158,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_D:
-            if (checkBound(startX, startY + STEP_SPAN)) {
+            if (checkBounds(startX, startY + STEP_SPAN)) {
                 setDX(0);
                 setDY(STEP_SPAN);
                 step++;
@@ -174,7 +167,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_LD:
-            if (checkBound(startX - STEP_SPAN, startY + STEP_SPAN)) {
+            if (checkBounds(startX - STEP_SPAN, startY + STEP_SPAN)) {
                 setDX(-STEP_SPAN);
                 setDY(STEP_SPAN);
                 step++;
@@ -184,7 +177,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_L:
-            if (checkBound(startX - STEP_SPAN, startY)) {
+            if (checkBounds(startX - STEP_SPAN, startY)) {
                 setDX(-STEP_SPAN);
                 setDY(0);
                 step++;
@@ -193,7 +186,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_LU:
-            if (checkBound(startX - STEP_SPAN, startY - STEP_SPAN)) {
+            if (checkBounds(startX - STEP_SPAN, startY - STEP_SPAN)) {
                 setDX(-STEP_SPAN);
                 setDY(-STEP_SPAN);
                 step++;
@@ -203,7 +196,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_U:
-            if (checkBound(startX, startY - STEP_SPAN)) {
+            if (checkBounds(startX, startY - STEP_SPAN)) {
                 setDX(0);
                 setDY(-STEP_SPAN);
                 step++;
@@ -212,7 +205,7 @@ void Zombie::generateMove() {
             }
             break;
         case DIR_RU:
-            if (checkBound(startX + STEP_SPAN, startY - STEP_SPAN)) {
+            if (checkBounds(startX + STEP_SPAN, startY - STEP_SPAN)) {
                 setDX(STEP_SPAN);
                 setDY(-STEP_SPAN);
                 step++;
@@ -222,7 +215,6 @@ void Zombie::generateMove() {
             }
             break;
     }
-    moving = false;
 }
 
 /**
@@ -371,10 +363,6 @@ string Zombie::generatePath(const int& xStart, const int& yStart,
  * Fred Yang
  * Feb 14
  */
-bool Zombie::checkBound(float x, float y) {
-    if (x < 0 || x > SCREEN_W || y < 0 || y > SCREEN_H) {
-        return false;
-    }
-
-    return true;
+bool Zombie::checkBounds(const float& x, const float& y) const {
+    return (!(x < 0 || x > SCREEN_W || y < 0 || y > SCREEN_H));
 }
