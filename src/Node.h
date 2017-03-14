@@ -70,8 +70,8 @@ public:
     }
 
     // current level plus remaining cost
-    void updatePriority(const int& xDest, const int &yDest) {
-         pri_ = lv_ + estimate(xDest, yDest) * BASE_COST;
+    void updatePriority(const int xNodeDest, const int yNodeDest) {
+         pri_ = lv_ + estimate(xNodeDest, yNodeDest) * BASE_COST;
     }
 
     // calculate next level based on direction
@@ -80,10 +80,10 @@ public:
     }
 
     // calculate cost per the remaining distance to the destination
-    const int& estimate(const int& xDest, const int& yDest) const {
+    const int& estimate(const int xNodeDest, const int yNodeDest) const {
         static int xDist, yDist, dist;
-        xDist = xDest - xPos_;
-        yDist = yDest - yPos_;
+        xDist = xNodeDest - xPos_;
+        yDist = yNodeDest - yPos_;
 
         // Euclidian Distance
         dist = static_cast<int>(sqrt(xDist * xDist + yDist * yDist));

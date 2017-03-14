@@ -17,18 +17,31 @@
 
 #ifndef COMMON_H
 #define COMMON_H
-#include <stdio.h>
+#include <iostream>
 
+// pi
 #define PI 3.14159265
 
-// screen width/height
-#define SCREEN_W    2000
-#define SCREEN_H    2000
+// font size
+#define FONT_SIZE   28
 
-// The size of a tile/node and how large each zombie step is
+// map width/height
+#define MAP_WIDTH   2000
+#define MAP_HEIGHT  2000
+
+// The size of a tile/node
 #define TILE_SIZE   50
-#define STEP_SPAN   50
 
+// base width/height
+#define BASE_WIDTH  100
+#define BASE_HEIGHT 100
+
+// zombie spawn points
+#define SPAWN_X1    600
+#define SPAWN_Y1    900
+#define SPAWN_X2    500
+#define SPAWN_Y2    1500
+ 
 // 8 possible directions
 #define DIR_CAP     8
 #define DIR_R       0
@@ -49,5 +62,19 @@
 #define SOUTHWEST 225
 #define WEST 270
 #define NORTHWEST 315
+
+// ticks (ms) in 1 second
+const float TICK_SEC = 1000.f;
+
+// overlapped
+const float OVERLAP = 0.1f;
+
+// zombie state
+typedef enum {
+    ZOMBIE_IDLE,
+    ZOMBIE_MOVE,
+    ZOMBIE_ATTACK,
+    ZOMBIE_DIE
+} ZOMBIE_STATE;
 
 #endif

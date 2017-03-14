@@ -19,13 +19,13 @@ bool Window::init() {
     mWindow = SDL_CreateWindow( "4981 Linux Game", 
                                SDL_WINDOWPOS_UNDEFINED, 
                                SDL_WINDOWPOS_UNDEFINED, 
-                               SCREEN_WIDTH, SCREEN_HEIGHT, 
+                               MAP_WIDTHIDTH, MAP_HEIGHTEIGHT, 
                                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
     if( mWindow != NULL ) {
         mMouseFocus = true;
         mKeyboardFocus = true;
-        mWidth = SCREEN_WIDTH;
-        mHeight = SCREEN_HEIGHT;
+        mWidth = MAP_WIDTHIDTH;
+        mHeight = MAP_HEIGHTEIGHT;
     }
 
     return mWindow != NULL;
@@ -46,15 +46,15 @@ void Window::handleEvent( SDL_Event& e ) {
         switch( e.window.event ) {
             //Get new dimensions
             case SDL_WINDOWEVENT_SIZE_CHANGED:
-            if (e.window.data1 < MIN_SCREEN_WIDTH) {
-                SDL_SetWindowSize(mWindow, MIN_SCREEN_WIDTH, e.window.data2);
-                mWidth = MIN_SCREEN_WIDTH;
+            if (e.window.data1 < MIN_MAP_WIDTHIDTH) {
+                SDL_SetWindowSize(mWindow, MIN_MAP_WIDTHIDTH, e.window.data2);
+                mWidth = MIN_MAP_WIDTHIDTH;
             } else {
                 mWidth = e.window.data1;
             }
-            if (e.window.data2 < MIN_SCREEN_HEIGHT) {
-                SDL_SetWindowSize(mWindow, e.window.data1, MIN_SCREEN_HEIGHT);
-                mHeight = MIN_SCREEN_HEIGHT;
+            if (e.window.data2 < MIN_MAP_HEIGHTEIGHT) {
+                SDL_SetWindowSize(mWindow, e.window.data1, MIN_MAP_HEIGHTEIGHT);
+                mHeight = MIN_MAP_HEIGHTEIGHT;
             } else {
                 mHeight = e.window.data2;        
             }
