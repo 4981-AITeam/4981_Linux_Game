@@ -1,6 +1,7 @@
 #include "Node.h"
 #include "Zombie.h"
 #include <utility>
+#include <iostream>
 using namespace std;
 
 Zombie::Zombie(int health, ZombieState state, int step, int dir, int frame)
@@ -27,8 +28,8 @@ int Zombie::getStep() const {
  * Fred Yang
  * Feb 14
  */
-void Zombie::setStep(const int sp) {
-    step = sp;
+void Zombie::setStep(const int step_) {
+    step = step_;
 }
 
 /**
@@ -63,8 +64,8 @@ int Zombie::getCurFrame() const {
  * Fred Yang
  * March 14
  */
-void Zombie::setCurFrame(const int frm) {
-    frame = frm;
+void Zombie::setCurFrame(const int frame_) {
+    frame = frame_;
 }
 
 /**
@@ -81,8 +82,8 @@ int Zombie::getCurDir() const {
  * Fred Yang
  * March 14
  */
-void Zombie::setCurDir(const int d) {
-    dir = d;
+void Zombie::setCurDir(const int dir_) {
+    dir = dir_;
 }
 
 /**
@@ -97,10 +98,8 @@ int Zombie::getMoveDir() {
 
     int sp = getStep();
     string pth = getPath();
-    /*
-    cout << "path: " << pth << endl;
-    cout << sp << '-' << pth.length() << endl;
-    */
+    /*cout << "path: " << pth << endl;
+    cout << sp << '-' << pth.length() << endl;*/
 
     return (sp < (int) pth.length() ? stoi(pth.substr(sp,1)) : -1);
 }
@@ -110,8 +109,8 @@ int Zombie::getMoveDir() {
  * Fred Yang
  * Feb 14
  */
-void Zombie::setPath(const string pth) {
-    path = pth;
+void Zombie::setPath(const string path_) {
+    path = path_;
 }
 
 /**
@@ -146,13 +145,17 @@ bool Zombie::isMoving() {
  * March 7
 */
 bool Zombie::checkBase() {
-    float curX = getX();
-    float curY = getY();
-    float baseX = MAP_WIDTH / 2 - BASE_WIDTH;
-    float baseY = MAP_HEIGHT / 2 - BASE_HEIGHT;
+    SDL_Rect rect, rectBase;
+    rect.w = ZOMBIE_WIDTH;
+    rect.h = ZOMBIE_HEIGHT;
+    rect.x = getX();
+    rect.y = getY();
+    rectBase.w = BASE_WIDTH;
+    rectBase.h = BASE_HEIGHT;
+    rectBase.x = BASE_X;
+    rectBase.y = BASE_Y;
 
-    return overlapped(curX, curY, ZOMBIE_WIDTH, ZOMBIE_HEIGHT,
-                      baseX, baseY, BASE_WIDTH, BASE_HEIGHT, OVERLAP);
+    return overlapped(rect, rectBase, OVERLAP);
 }
 
 /**
@@ -182,56 +185,56 @@ void Zombie::generateMove() {
     // Each case will check if the zombie is within bounds before moving
     switch(d) {
         case DIR_R:
-            if (checkBounds(startX + ZOMBIE_VELOCITY, startY)) {
+            if (checkBounds(Point(startX + ZOMBIE_VELOCITY, startY))) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(0);
                 setAngle(EAST);
             }
             break;
         case DIR_RD:
-            if (checkBounds(startX + ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX + ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY))) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(ZOMBIE_VELOCITY);
                 setAngle(SOUTHEAST);
             }
             break;
         case DIR_D:
-            if (checkBounds(startX, startY + ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX, startY + ZOMBIE_VELOCITY))) {
                 setDX(0);
                 setDY(ZOMBIE_VELOCITY);
                 setAngle(SOUTH);
             }
             break;
         case DIR_LD:
-            if (checkBounds(startX - ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX - ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY))) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(ZOMBIE_VELOCITY);
                 setAngle(SOUTHWEST);
             }
             break;
         case DIR_L:
-            if (checkBounds(startX - ZOMBIE_VELOCITY, startY)) {
+            if (checkBounds(Point(startX - ZOMBIE_VELOCITY, startY))) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(0);
                 setAngle(WEST);
             }
             break;
         case DIR_LU:
-            if (checkBounds(startX - ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX - ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY))) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(-ZOMBIE_VELOCITY);
                 setAngle(NORTHWEST);
             }
             break;
         case DIR_U:
-            if (checkBounds(startX, startY - ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX, startY - ZOMBIE_VELOCITY))) {
                 setDX(0);
                 setDY(-ZOMBIE_VELOCITY);
                 setAngle(NORTH);
             }
             break;
         case DIR_RU:
-            if (checkBounds(startX + ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY)) {
+            if (checkBounds(Point(startX + ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY))) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(-ZOMBIE_VELOCITY);
                 setAngle(NORTHEAST);
@@ -257,8 +260,15 @@ void Zombie::generateMove() {
  * Fred Yang
  * Feb 14
  */
-string Zombie::generatePath(const float xStart, const float yStart,
-                            const float xDest, const float yDest) {
+string Zombie::generatePath(const Point& start) {
+    return generatePath(start, Point(MAP_WIDTH/2, MAP_HEIGHT/2));
+}
+/**
+ * A* algo generates a string of direction digits.
+ * Fred Yang
+ * Feb 14
+ */
+string Zombie::generatePath(const Point& start, const Point& dest) {
     // priority queue index
     int index = 0;
 
@@ -282,17 +292,17 @@ string Zombie::generatePath(const float xStart, const float yStart,
     static priority_queue<Node> pq[2];
 
     // reset the node maps
-    for (i = 0; i < row; i++) {
-        for (j = 0; j < col; j++) {
+    for (i = 0; i < ROW_NUM; i++) {
+        for (j = 0; j < COL_NUM; j++) {
             closedNodes[i][j] = 0;
             openNodes[i][j] = 0;
         }
     }
 
-    int xNodeStart = (int) xStart / TILE_SIZE;
-    int yNodeStart = (int) yStart / TILE_SIZE;
-    int xNodeDest = (int) xDest / TILE_SIZE;
-    int yNodeDest = (int) yDest / TILE_SIZE;
+    int xNodeStart = (int) (start.first + TILE_OFFSET) / TILE_SIZE;
+    int yNodeStart = (int) (start.second + TILE_OFFSET) / TILE_SIZE;
+    int xNodeDest = (int) (dest.first + TILE_OFFSET) / TILE_SIZE;
+    int yNodeDest = (int) (dest.second + TILE_OFFSET) / TILE_SIZE;
 
     // create the start node and push into open list
     curNode = Node(xNodeStart, yNodeStart, 0, 0);
@@ -303,7 +313,7 @@ string Zombie::generatePath(const float xStart, const float yStart,
     while (!pq[index].empty()) {
         // get the current node with the highest priority from open list
         curNode = Node(pq[index].top().getXPos(), pq[index].top().getYPos(),
-                           pq[index].top().getLevel(), pq[index].top().getPriority());
+                       pq[index].top().getLevel(), pq[index].top().getPriority());
 
         x = curNode.getXPos();
         y = curNode.getYPos();
@@ -344,8 +354,8 @@ string Zombie::generatePath(const float xStart, const float yStart,
             ydy = y + my[i];
 
             // not evaluated & not outside (bound checking)
-            if (!(xdx < 0 || xdx > col -1 || ydy < 0 || ydy > row - 1
-                || map[xdx][ydy] == 1 || closedNodes[xdx][ydy] == 1)) {
+            if (!(xdx < 0 || xdx > COL_NUM -1 || ydy < 0 || ydy > ROW_NUM - 1
+                || blockMatrix[xdx][ydy] == 1 || closedNodes[xdx][ydy] == 1)) {
 
                 // generate a child node
                 childNode = Node(xdx, ydy, curNode.getLevel(), curNode.getPriority());
@@ -398,17 +408,18 @@ string Zombie::generatePath(const float xStart, const float yStart,
  * Fred Yang
  * Feb 14
  */
-bool Zombie::checkBounds(const float x, const float y) const {
-    return (!(x < 0 || x > MAP_WIDTH || y < 0 || y > MAP_HEIGHT));
+bool Zombie::checkBounds(const Point& point) const {
+    return (!(point.first < TILE_SIZE - TILE_OFFSET
+            || point.second < TILE_SIZE - TILE_OFFSET
+            || point.first > MAP_WIDTH + TILE_OFFSET - TILE_SIZE 
+            || point.second > MAP_HEIGHT + TILE_OFFSET - TILE_SIZE));
 }
 
 /**
  * Check to see if two squares overlapped
  */
-bool Zombie::overlapped(const float x1, const float y1,
-                        const int w1, const int h1,
-                        const float x2, const float y2,
-                        const int w2, const int h2,
+bool Zombie::overlapped(const SDL_Rect& rect1, 
+                        const SDL_Rect& rect2,
                         const float overlap) {
     int xb = 0; // big x
     int yb = 0; // big y
@@ -417,31 +428,31 @@ bool Zombie::overlapped(const float x1, const float y1,
     int width = 0;
     int height = 0;
 
-    if (x1 >= x2) {
-        xb = x1;
-        xs = x2;
-        width = w2;
+    if (rect1.x >= rect2.x) {
+        xb = rect1.x;
+        xs = rect2.x;
+        width = rect2.w;
     } else {
-        xb = x2;
-        xs = x1;
-        width = w1;
+        xb = rect2.x;
+        xs = rect1.x;
+        width = rect1.w;
     }
 
-    if (y1 >= y2) {
-        yb = y1;
-        ys = y2;
-        height = h2;
+    if (rect1.y >= rect2.y) {
+        yb = rect1.y;
+        ys = rect2.y;
+        height = rect2.h;
     } else {
-        yb = y2;
-        ys = y1;
-        height = h1;
+        yb = rect2.y;
+        ys = rect1.y;
+        height = rect1.h;
     }
 
-    if (xb >= xs && xb <= xs+width-1 && yb >= ys && yb <= ys+height-1) {
-        float dWidth = width-xb+xs;
-        float dHeight = height-yb+ys;
+    if (xb >= xs && xb <= xs + width - 1 && yb >= ys && yb <= ys + height - 1) {
+        float fWidth = width - xb + xs;
+        float fHeight = height - yb + ys;
 
-        if (dWidth * dHeight / (w2 * h2) >= OVERLAP) {
+        if (fWidth * fHeight / (rect2.w * rect2.h) >= OVERLAP) {
             return true;
         }
     }

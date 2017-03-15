@@ -35,7 +35,6 @@ Point Base::getSpawnPoint() {
     //The gab between the spawn point and base.
     int gab = 100;
 
-
     switch(distr(eng)){
         case 0://North
 

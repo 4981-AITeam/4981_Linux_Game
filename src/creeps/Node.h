@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------------------------------
 -- HEADER FILE: Node.h
 --
 -- FUNCTIONS:
@@ -12,37 +12,36 @@
 --
 -- NOTES:
 -- Used for the A* algorithm in navigating the map
-----------------------------------------------------------------------------------------------------------------------*/
+-----------------------------------------------------------------------------------------------------*/
 
 #ifndef NODE_H
 #define NODE_H
 #include <math.h>
 #include <queue>
-#include "Zombie.h"
+#include "Block.h"
+
+// 8 possible directions
+static constexpr int DIR_CAP = 8;
 
 // horizontal/vertical & diagonal cost
 static constexpr int BASE_COST   = 10;
 static constexpr int EXTEND_COST = 14;
 
-// The size of a tile/node
-static constexpr int TILE_SIZE   = 50;
+// tile size & offset
+static constexpr int TILE_SIZE   = 100;
+static constexpr int TILE_OFFSET = 1000;
 
-// map row & column
-static constexpr int row = TILE_SIZE;
-static constexpr int col = TILE_SIZE;
-static int map[row][col];
-
-static int closedNodes[row][col]; // array of closed nodes (evaluated)
-static int openNodes[row][col];   // array of open nodes (to be evaluated)
-static int dirMap[row][col];      // array of directions
+static int closedNodes[ROW_NUM][COL_NUM]; // array of closed nodes (evaluated)
+static int openNodes[ROW_NUM][COL_NUM];   // array of open nodes (to be evaluated)
+static int dirMap[ROW_NUM][COL_NUM];      // array of directions
 
 /**
  * 8 possible movements
  * 0 - right, 1 - right down, 2 - down, 3 - left down
  * 4 - left, 5 - left up, 6 - up, 7 - right up
  */
-static int mx[DIR_CAP]={1, 1, 0, -1, -1, -1, 0, 1};
-static int my[DIR_CAP]={0, 1, 1, 1, 0, -1, -1, -1};
+static int mx[DIR_CAP] = {1, 1, 0, -1, -1, -1, 0, 1};
+static int my[DIR_CAP] = {0, 1, 1, 1, 0, -1, -1, -1};
 
 class Node {
 public:
