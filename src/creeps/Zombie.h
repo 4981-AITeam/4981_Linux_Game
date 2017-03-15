@@ -11,18 +11,18 @@
 #include <random>
 #include <vector>
 #include <utility>
-#include <SDL2/SDL.h>
 #include "../view/Window.h"
 #include "../basic/Movable.h"
 
-static constexpr int ZOMBIE_VELOCITY = 50;
-static constexpr int ZOMBIE_INIT_HP  = 100;
-static constexpr int ZOMBIE_FRAMES   = 50;
+typedef std::pair<float, float> Point;
+
 static constexpr int ZOMBIE_HEIGHT   = 125;
 static constexpr int ZOMBIE_WIDTH    = 75;
+static constexpr int ZOMBIE_INIT_HP  = 100;
+static constexpr int ZOMBIE_VELOCITY = 100;
+static constexpr int ZOMBIE_FRAMES   = 100;
 
 // 8 possible directions
-static constexpr int DIR_CAP = 8;
 static constexpr int DIR_R   = 0;
 static constexpr int DIR_RD  = 1;
 static constexpr int DIR_D   = 2;
@@ -42,7 +42,7 @@ static constexpr int SOUTHWEST = 225;
 static constexpr int WEST      = 270;
 static constexpr int NORTHWEST = 315;
 
-// overlapped
+// overlapped value
 static constexpr float OVERLAP = 0.1f;
 
 // zombie state
@@ -65,11 +65,11 @@ public:
 
     void generateMove();            // A* movement
 
-    void setStep(const int sp);     // set step
+    void setStep(const int step_);  // set step
 
     int getStep() const;            // get step
 
-    void setState(const ZombieState stat); // set state
+    void setState(const ZombieState state_); // set state
 
     ZombieState getState() const;  // get state
 
@@ -79,28 +79,26 @@ public:
 
     std::string getPath() const;    // get path
 
-    void setPath(const std::string pth); // set path
+    void setPath(const std::string path_); // set path
 
     int getMoveDir();               // get move direction
 
-    void setCurDir(const int d);    // set current direction
+    void setCurDir(const int dir_); // set current direction
 
     int getCurDir() const;          // get current direction
 
-    void setCurFrame(const int frm); // set current frame
+    void setCurFrame(const int frame_); // set current frame
 
     int getCurFrame() const;        // get current frame
 
-    bool checkBounds(const float x, const float y) const;  // boundary checks
+    bool checkBounds(const Point& point) const;  // boundary checks
 
     // A* path
-    std::string generatePath(const float xStart, const float yStart,
-                             const float xDest, const float yDest);
+    std::string generatePath(const Point& start);
+    std::string generatePath(const Point& start, const Point& dest);
 
-    // overlapped method
-    bool overlapped(const float x1, const float y1, const int w1, const int h1,
-                    const float x2, const float y2, const int w2, const int h2,
-                    const float overlap);
+    // overlapped method for 2 rects
+    bool overlapped(const SDL_Rect& rect1, const SDL_Rect& rect2, const float overlap);
 
 private:
     int health;         // health points of zombie

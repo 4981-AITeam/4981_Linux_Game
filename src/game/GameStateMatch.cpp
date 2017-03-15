@@ -42,10 +42,7 @@ bool GameStateMatch::load() {
 
     // Create Dummy Entitys
     GameManager::instance()->createMarine(game.renderer, 1500, 1500);
-    GameManager::instance()->createZombie(game.renderer, 600, 900);
-    GameManager::instance()->createZombie(game.renderer, 500, 1500);
-    GameManager::instance()->createZombie(game.renderer, 1500, 250);
-    GameManager::instance()->createTurret(game.renderer, 1000, 500);
+    //GameManager::instance()->createZombie(game.renderer, 100, 800);
     GameManager::instance()->createWeaponDrop(game.renderer, 1800, 1700);
     //base = Base();
 
@@ -109,9 +106,9 @@ void GameStateMatch::loop() {
 
         ++countedFrames;
 
-        if(fpsTimer.getTicks() / 1000 > second) {
+        if(fpsTimer.getTicks() / TICK_SEC > second) {
             GameManager::instance()->createZombieWave(game.renderer, 1);
-            second+=5;
+            second += 10;
         }
 
         //If frame finished early

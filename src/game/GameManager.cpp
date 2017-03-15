@@ -65,16 +65,6 @@ void GameManager::updateMarines(const float delta) {
     }
 }
 
-// Update zombie movements.
-void GameManager::updateZombies(const float delta) {
-    for (auto& z : zombieManager) {
-        z.second.generateMove();
-        if (z.second.isMoving()) {
-            z.second.move((z.second.getDX()*delta), (z.second.getDY()*delta), collisionHandler);
-        }
-    }
-}
-
 // Update turret actions.
 // Jamie, 2017-03-01.
 void GameManager::updateTurrets(const float delta) {
@@ -179,10 +169,20 @@ bool GameManager::createZombie(SDL_Renderer* gRenderer, const float x, const flo
     }
 
     zombieManager.at(id).setPosition(x,y);
-    zombieManager.at(id).generatePath(x, y, MAP_WIDTH/2 - BASE_WIDTH, MAP_HEIGHT/2 - BASE_HEIGHT);
+    zombieManager.at(id).generatePath(Point(x,y));
     zombieManager.at(id).setState(ZOMBIE_MOVE);
 
     return true;
+}
+
+// Update zombie movements.
+void GameManager::updateZombies(const float delta) {
+    for (auto& z : zombieManager) {
+        z.second.generateMove();
+        if (z.second.isMoving()) {
+            z.second.move((z.second.getDX()*delta), (z.second.getDY()*delta), collisionHandler);
+        }
+    }
 }
 
 // Deletes zombie from level
