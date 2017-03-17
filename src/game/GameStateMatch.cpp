@@ -43,12 +43,14 @@ bool GameStateMatch::load() {
 
     // Create Dummy Entitys
     GameManager::instance()->createMarine(game.renderer, 1500, 1500);
-    GameManager::instance()->createZombie(game.renderer, 600, 900);
-    GameManager::instance()->createZombie(game.renderer, 500, 1500);
-    GameManager::instance()->createZombie(game.renderer, 1500, 250);
-    GameManager::instance()->createTurret(game.renderer, 1000, 500);
     GameManager::instance()->createWeaponDrop(game.renderer, 1800, 1700);
-    //base = Base();
+    /*GameManager::instance()->createZombie(game.renderer, -900, -900);
+    GameManager::instance()->createZombie(game.renderer, 1900, -900);
+    GameManager::instance()->createZombie(game.renderer, 2900, -900);
+    GameManager::instance()->createZombie(game.renderer, 2900, 2900);
+    GameManager::instance()->createZombie(game.renderer, 1900, 2900);
+    GameManager::instance()->createZombie(game.renderer, -900, 2900);
+    GameManager::instance()->createZombie(game.renderer, 1600, 200);*/
 
     if (!base.texture.loadFromFile("assets/texture/base.png", game.renderer)) {
         logv("Failed to load the base texture!\n");

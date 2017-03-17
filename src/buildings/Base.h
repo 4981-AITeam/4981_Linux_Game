@@ -16,6 +16,10 @@
 static constexpr int BASE_WIDTH  = 500;
 static constexpr int BASE_HEIGHT = 500;
 
+// default location
+static constexpr int BASE_X      = 750;
+static constexpr int BASE_Y      = 750;
+
 // map width/height
 static constexpr int MAP_WIDTH   = 2000;
 static constexpr int MAP_HEIGHT  = 2000;

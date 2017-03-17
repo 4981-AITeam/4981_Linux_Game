@@ -18,24 +18,23 @@
 #define NODE_H
 #include <math.h>
 #include <queue>
-#include "Zombie.h"
+#include "../game/GameMap.h"
 #include "../log/log.h"
+
+// 8 possible directions
+static constexpr int DIR_CAP = 8;
 
 // horizontal/vertical & diagonal cost
 static constexpr int BASE_COST   = 10;
 static constexpr int EXTEND_COST = 14;
 
-// The size of a tile/node
-static constexpr int TILE_SIZE   = 50;
+// tile size & offset
+static constexpr int TILE_SIZE   = 100;
+static constexpr int TILE_OFFSET = 1000;
 
-// map row & column
-static constexpr int ROW = TILE_SIZE;
-static constexpr int COL = TILE_SIZE;
-static int gameMap[ROW][COL];
-
-static int closedNodes[ROW][COL]; // array of closed nodes (evaluated)
-static int openNodes[ROW][COL];   // array of open nodes (to be evaluated)
-static int dirMap[ROW][COL];      // array of directions
+static int closedNodes[ROWS][COLS]; // array of closed nodes (evaluated)
+static int openNodes[ROWS][COLS];   // array of open nodes (to be evaluated)
+static int dirMap[ROWS][COLS];      // array of directions
 
 /**
  * 8 possible movements

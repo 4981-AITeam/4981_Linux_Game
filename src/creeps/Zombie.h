@@ -15,14 +15,15 @@
 #include "../view/Window.h"
 #include "../basic/Movable.h"
 
-static constexpr int ZOMBIE_VELOCITY = 50;
-static constexpr int ZOMBIE_INIT_HP  = 100;
-static constexpr int ZOMBIE_FRAMES   = 50;
+typedef std::pair<float, float> Point;
+
 static constexpr int ZOMBIE_HEIGHT   = 125;
 static constexpr int ZOMBIE_WIDTH    = 75;
+static constexpr int ZOMBIE_INIT_HP  = 100;
+static constexpr int ZOMBIE_VELOCITY = 150;
+static constexpr int ZOMBIE_FRAMES   = 30;
 
 // 8 possible directions
-static constexpr int DIR_CAP = 8;
 enum class ZombieDirection : int {
     DIR_R,
     DIR_RD,
@@ -47,9 +48,6 @@ enum class ZombieAngles : int {
     NORTHWEST = 315
 };
 
-// overlapped
-static constexpr float OVERLAP = 0.1;
-
 // zombie state
 enum class ZombieState {
     ZOMBIE_IDLE,
@@ -57,6 +55,12 @@ enum class ZombieState {
     ZOMBIE_ATTACK,
     ZOMBIE_DIE
 };
+
+// overlapped
+static constexpr float OVERLAP = 0.01;
+
+// block threshold - check if zombie is blocked
+static constexpr float BLOCK_THRESHOLD = 0.5;
 
 class Zombie : public Movable {
 public:
@@ -67,20 +71,25 @@ public:
     void onCollision();
 
     void collidingProjectile(int damage);
+    
+    void move(float moveX, float moveY, CollisionHandler& ch) override;  // move method
 
-    void generateMove();            // A* movement
+    void generateMove();                  // A* movement
 
     bool isMoving() const;                // Returns if the zombie should be moving
 
-    bool checkTarget() const;               // checks if the zombie already arrived at the target
+    bool checkTarget();                   // checks if the zombie already arrived at the target
 
-    ZombieDirection getMoveDir() const;               // get move direction
-
-    static constexpr bool checkBounds(const float x, const float y);  // boundary checks
+    ZombieDirection getMoveDir();         // get move direction
+    
+    bool checkBounds(const Point& point) const;  // boundary checks
 
     // A* path
-    std::string generatePath(const float xStart, const float yStart,
-            const float xDest, const float yDest);
+    std::string generatePath(const Point& start);
+    std::string generatePath(const Point& start, const Point& dest);
+
+    // overlapped method checking 2 rectangles
+    bool overlapped(const SDL_Rect& rect1, const SDL_Rect& rect2, const float overlap);
 
     /**
      * Set steps taken
@@ -175,9 +184,9 @@ public:
 private:
     int health;         // health points of zombie
     std::string path;   // A* path zombie should follow
-    ZombieState state; // 0 - idle, 1 - move, 2 - attack, 3 - die
+    ZombieState state;  // 0 - idle, 1 - move, 2 - attack, 3 - die
     int step;           // Number of steps zombie has taken in path
-    ZombieDirection dir;            // moving direction
+    ZombieDirection dir;// moving direction
     int frame;          // frames per tile
 };
 
