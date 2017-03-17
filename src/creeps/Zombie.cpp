@@ -1,88 +1,18 @@
 #include "Node.h"
 #include "Zombie.h"
+#include "../log/log.h"
+#include "../game/GameManager.h"
 #include <utility>
 using namespace std;
 
-Zombie::Zombie(int health, ZombieState state, int step, int dir, int frame)
+Zombie::Zombie(int health, ZombieState state, int step, ZombieDirection dir, int frame)
       : Movable(ZOMBIE_VELOCITY), health(health), state(state), step(step),
         dir(dir), frame(frame) {
-    printf("Create Zombie\n");
+    logv("Create Zombie\n");
 }
 
 Zombie::~Zombie() {
-    //logv("Destroy Zombie\n");
-}
-
-/**
- * Get steps taken
- * Fred Yang
- * Feb 14
- */
-int Zombie::getStep() const {
-    return step;
-}
-
-/**
- * Set steps taken
- * Fred Yang
- * Feb 14
- */
-void Zombie::setStep(const int sp) {
-    step = sp;
-}
-
-/**
- * Get state
- * Fred Yang
- * March 14
- */
-ZombieState Zombie::getState() const {
-    return state;
-}
-
-/**
- * Set state
- * Fred Yang
- * March 14
- */
-void Zombie::setState(const ZombieState state_) {
-    state = state_;
-}
-
-/**
- * Get current frame
- * Fred Yang
- * March 14
- */
-int Zombie::getCurFrame() const {
-    return frame;
-}
-
-/**
- * Set frame
- * Fred Yang
- * March 14
- */
-void Zombie::setCurFrame(const int frm) {
-    frame = frm;
-}
-
-/**
- * Get current direction
- * Fred Yang
- * March 14
- */
-int Zombie::getCurDir() const {
-    return dir;
-}
-
-/**
- * Set direction
- * Fred Yang
- * March 14
- */
-void Zombie::setCurDir(const int d) {
-    dir = d;
+    logv("Destroy Zombie\n");
 }
 
 /**
@@ -90,37 +20,19 @@ void Zombie::setCurDir(const int d) {
  * Fred Yang
  * February 14
  */
-int Zombie::getMoveDir() {
+ZombieDirection Zombie::getMoveDir() const {
     if (frame > 0) {
         return dir;
     }
 
-    int sp = getStep();
-    string pth = getPath();
+    const int sp = getStep();
+    const string pth = getPath();
     /*
     cout << "path: " << pth << endl;
     cout << sp << '-' << pth.length() << endl;
     */
 
-    return (sp < (int) pth.length() ? stoi(pth.substr(sp,1)) : -1);
-}
-
-/**
- * Set A* path
- * Fred Yang
- * Feb 14
- */
-void Zombie::setPath(const string pth) {
-    path = pth;
-}
-
-/**
- * Get A* path
- * Fred Yang
- * Feb 14
- */
-string Zombie::getPath() const {
-    return path;
+    return static_cast<ZombieDirection>(sp < static_cast<int>(pth.length()) ? stoi(pth.substr(sp,1)) : -1);
 }
 
 void Zombie::onCollision() {
@@ -136,23 +48,19 @@ void Zombie::collidingProjectile(int damage) {
  * Robert Arendac
  * March 7
 */
-bool Zombie::isMoving() {
-    return (state == ZOMBIE_MOVE);
+bool Zombie::isMoving() const {
+    return (state == ZombieState::ZOMBIE_MOVE);
 }
 
 /*
- * Does a check to see if the zombie already arrived at the base.
- * Robert Arendac, Fred Yang
+ * Does a check to see if the zombie already arrived at the target.
+ * In theory, zombies will only have a movement collision with a target
+ * as their pathfinding should walk around obstacles.
+ * Robert Arendac
  * March 7
 */
-bool Zombie::checkBase() {
-    float curX = getX();
-    float curY = getY();
-    float baseX = MAP_WIDTH / 2 - BASE_WIDTH;
-    float baseY = MAP_HEIGHT / 2 - BASE_HEIGHT;
-
-    return overlapped(curX, curY, ZOMBIE_WIDTH, ZOMBIE_HEIGHT,
-                      baseX, baseY, BASE_WIDTH, BASE_HEIGHT, OVERLAP);
+bool Zombie::checkTarget() const {
+    return GameManager::instance()->getCollisionHandler().detectMovementCollision(this);
 }
 
 /**
@@ -161,19 +69,20 @@ bool Zombie::checkBase() {
  * March 13
 */
 void Zombie::generateMove() {
-    int d = getMoveDir();   //Direction zombie is moving
+    const ZombieDirection d = getMoveDir();   //Direction zombie is moving
     //cout << "move dir: " << d << " state: " << state << " Frame: " << frame << endl;
-    float startX = getX();
-    float startY = getY();
+    const float startX = getX();
+    const float startY = getY();
 
     // Path is empty, shouldn't move
-    if (d < 0 || checkBase()) {
+    if (d == ZombieDirection::DIR_INVALID || checkTarget()) {
         if (frame > 0) {
-            frame--;
+            --frame;
         }
 
-        if (state != ZOMBIE_IDLE) {
-            setState(ZOMBIE_IDLE);
+        // Changed to attack state once attack code is ready
+        if (state != ZombieState::ZOMBIE_IDLE) {
+            setState(ZombieState::ZOMBIE_IDLE);
         }
 
         return;
@@ -181,75 +90,75 @@ void Zombie::generateMove() {
 
     // Each case will check if the zombie is within bounds before moving
     switch(d) {
-        case DIR_R:
+        case ZombieDirection::DIR_R:
             if (checkBounds(startX + ZOMBIE_VELOCITY, startY)) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(0);
-                setAngle(EAST);
+                setAngle(static_cast<double>(ZombieAngles::EAST));
             }
             break;
-        case DIR_RD:
+        case ZombieDirection::DIR_RD:
             if (checkBounds(startX + ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY)) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(ZOMBIE_VELOCITY);
-                setAngle(SOUTHEAST);
+                setAngle(static_cast<double>(ZombieAngles::SOUTHEAST));
             }
             break;
-        case DIR_D:
+        case ZombieDirection::DIR_D:
             if (checkBounds(startX, startY + ZOMBIE_VELOCITY)) {
                 setDX(0);
                 setDY(ZOMBIE_VELOCITY);
-                setAngle(SOUTH);
+                setAngle(static_cast<double>(ZombieAngles::SOUTH));
             }
             break;
-        case DIR_LD:
+        case ZombieDirection::DIR_LD:
             if (checkBounds(startX - ZOMBIE_VELOCITY, startY + ZOMBIE_VELOCITY)) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(ZOMBIE_VELOCITY);
-                setAngle(SOUTHWEST);
+                setAngle(static_cast<double>(ZombieAngles::SOUTHWEST));
             }
             break;
-        case DIR_L:
+        case ZombieDirection::DIR_L:
             if (checkBounds(startX - ZOMBIE_VELOCITY, startY)) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(0);
-                setAngle(WEST);
+                setAngle(static_cast<double>(ZombieAngles::WEST));
             }
             break;
-        case DIR_LU:
+        case ZombieDirection::DIR_LU:
             if (checkBounds(startX - ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY)) {
                 setDX(-ZOMBIE_VELOCITY);
                 setDY(-ZOMBIE_VELOCITY);
-                setAngle(NORTHWEST);
+                setAngle(static_cast<double>(ZombieAngles::NORTHWEST));
             }
             break;
-        case DIR_U:
+        case ZombieDirection::DIR_U:
             if (checkBounds(startX, startY - ZOMBIE_VELOCITY)) {
                 setDX(0);
                 setDY(-ZOMBIE_VELOCITY);
-                setAngle(NORTH);
+                setAngle(static_cast<double>(ZombieAngles::NORTH));
             }
             break;
-        case DIR_RU:
+        case ZombieDirection::DIR_RU:
             if (checkBounds(startX + ZOMBIE_VELOCITY, startY - ZOMBIE_VELOCITY)) {
                 setDX(ZOMBIE_VELOCITY);
                 setDY(-ZOMBIE_VELOCITY);
-                setAngle(NORTHEAST);
+                setAngle(static_cast<double>(ZombieAngles::NORTHEAST));
             }
+            break;
+        case ZombieDirection::DIR_INVALID:  // Shouldn't ever happens, gets rid of warning
             break;
     }
 
     if (frame > 0) {
-        frame--;
+        --frame;
     } else {
         setCurFrame(ZOMBIE_FRAMES);
-        step++;
+        ++step;
     }
 
     setCurDir(d);
-    if (state != ZOMBIE_MOVE) {
-        setState(ZOMBIE_MOVE);
-    }
+    setState(ZombieState::ZOMBIE_MOVE);
 }
 
 /**
@@ -258,18 +167,19 @@ void Zombie::generateMove() {
  * Feb 14
  */
 string Zombie::generatePath(const float xStart, const float yStart,
-                            const float xDest, const float yDest) {
+        const float xDest, const float yDest) {
     // priority queue index
     int index = 0;
 
     // temp index
-    int i, j;
+    int i;
+    int j;
 
     // row / column index
-    int x, y, xdx, ydy;
-
-    // temp char
-    char c;
+    int x;
+    int y;
+    int xdx;
+    int ydy;
 
     // path to be generated
     string path;
@@ -279,20 +189,17 @@ string Zombie::generatePath(const float xStart, const float yStart,
     static Node childNode;
 
     // priority queue
-    static priority_queue<Node> pq[2];
+    static array<priority_queue<Node>, 2> pq;
+    //static priority_queue<Node> pq[2];
 
     // reset the node maps
-    for (i = 0; i < row; i++) {
-        for (j = 0; j < col; j++) {
-            closedNodes[i][j] = 0;
-            openNodes[i][j] = 0;
-        }
-    }
+    memset(closedNodes, 0, sizeof(closedNodes[0][0]) * ROW * COL);
+    memset(openNodes, 0, sizeof(openNodes[0][0]) * ROW * COL);
 
-    int xNodeStart = (int) xStart / TILE_SIZE;
-    int yNodeStart = (int) yStart / TILE_SIZE;
-    int xNodeDest = (int) xDest / TILE_SIZE;
-    int yNodeDest = (int) yDest / TILE_SIZE;
+    const int xNodeStart = static_cast<int>(xStart / TILE_SIZE);
+    const int yNodeStart = static_cast<int>(yStart / TILE_SIZE);
+    const int xNodeDest = static_cast<int>(xDest / TILE_SIZE);
+    const int yNodeDest = static_cast<int>(yDest / TILE_SIZE);
 
     // create the start node and push into open list
     curNode = Node(xNodeStart, yNodeStart, 0, 0);
@@ -301,9 +208,9 @@ string Zombie::generatePath(const float xStart, const float yStart,
 
     // A* path finding
     while (!pq[index].empty()) {
+        Node tmp = pq[index].top();
         // get the current node with the highest priority from open list
-        curNode = Node(pq[index].top().getXPos(), pq[index].top().getYPos(),
-                           pq[index].top().getLevel(), pq[index].top().getPriority());
+        curNode = Node(tmp.getXPos(), tmp.getYPos(), tmp.getLevel(), tmp.getPriority());
 
         x = curNode.getXPos();
         y = curNode.getYPos();
@@ -322,16 +229,13 @@ string Zombie::generatePath(const float xStart, const float yStart,
             path = "";
             while (!(x == xNodeStart && y == yNodeStart)) {
                 j = dirMap[x][y];
-                c = '0' + (j + DIR_CAP/2)%DIR_CAP;
-                path = c + path;
-                x += mx[j];
-                y += my[j];
+                path = static_cast<char>('0' + (j + DIR_CAP / 2) % DIR_CAP) + path;
+                x += MX[j];
+                y += MY[j];
             }
 
             // empty the leftover nodes
-            while (!pq[index].empty()) {
-                 pq[index].pop();
-             }
+            pq[index] = priority_queue<Node>();
 
             setPath(path);
             return path;
@@ -340,12 +244,12 @@ string Zombie::generatePath(const float xStart, const float yStart,
         // traverse neighbors
         for (i = 0; i < DIR_CAP;i++) {
             // neighbor coordinates
-            xdx = x + mx[i];
-            ydy = y + my[i];
+            xdx = x + MX[i];
+            ydy = y + MY[i];
 
             // not evaluated & not outside (bound checking)
-            if (!(xdx < 0 || xdx > col -1 || ydy < 0 || ydy > row - 1
-                || map[xdx][ydy] == 1 || closedNodes[xdx][ydy] == 1)) {
+            if (!(xdx < 0 || xdx > COL - 1 || ydy < 0 || ydy > ROW - 1
+                    || gameMap[xdx][ydy] == 1 || closedNodes[xdx][ydy] == 1)) {
 
                 // generate a child node
                 childNode = Node(xdx, ydy, curNode.getLevel(), curNode.getPriority());
@@ -357,12 +261,12 @@ string Zombie::generatePath(const float xStart, const float yStart,
                     openNodes[xdx][ydy] = childNode.getPriority();
                     pq[index].push(childNode);
                     // update the parent direction info
-                    dirMap[xdx][ydy] = (i + DIR_CAP/2)%DIR_CAP;
+                    dirMap[xdx][ydy] = (i + DIR_CAP / 2) % DIR_CAP;
                 } else if (openNodes[xdx][ydy] > childNode.getPriority()) {
                     // update the priority info
                     openNodes[xdx][ydy]= childNode.getPriority();
                     // update the parent direction info
-                    dirMap[xdx][ydy] = (i + DIR_CAP/2)%DIR_CAP;
+                    dirMap[xdx][ydy] = (i + DIR_CAP / 2) % DIR_CAP;
 
                     // use a queue and a backup queue to put the best node (with highest priority)
                     // on the top of the queue, which can be chosen later on to build the path.
@@ -375,12 +279,12 @@ string Zombie::generatePath(const float xStart, const float yStart,
                     pq[index].pop();
 
                     // switch to pq with smaller size
-                    if (pq[index].size() > pq[1-index].size()) {
+                    if (pq[index].size() > pq[1 - index].size()) {
                         index = 1 - index;
                     }
 
                     while (!pq[index].empty()) {
-                        pq[1-index].push(pq[index].top());
+                        pq[1 - index].push(pq[index].top());
                         pq[index].pop();
                     }
                     index = 1 - index;
@@ -398,53 +302,6 @@ string Zombie::generatePath(const float xStart, const float yStart,
  * Fred Yang
  * Feb 14
  */
-bool Zombie::checkBounds(const float x, const float y) const {
+constexpr bool Zombie::checkBounds(const float x, const float y) {
     return (!(x < 0 || x > MAP_WIDTH || y < 0 || y > MAP_HEIGHT));
-}
-
-/**
- * Check to see if two squares overlapped
- */
-bool Zombie::overlapped(const float x1, const float y1,
-                        const int w1, const int h1,
-                        const float x2, const float y2,
-                        const int w2, const int h2,
-                        const float overlap) {
-    int xb = 0; // big x
-    int yb = 0; // big y
-    int xs = 0; // small x
-    int ys = 0; // small y
-    int width = 0;
-    int height = 0;
-
-    if (x1 >= x2) {
-        xb = x1;
-        xs = x2;
-        width = w2;
-    } else {
-        xb = x2;
-        xs = x1;
-        width = w1;
-    }
-
-    if (y1 >= y2) {
-        yb = y1;
-        ys = y2;
-        height = h2;
-    } else {
-        yb = y2;
-        ys = y1;
-        height = h1;
-    }
-
-    if (xb >= xs && xb <= xs+width-1 && yb >= ys && yb <= ys+height-1) {
-        float dWidth = width-xb+xs;
-        float dHeight = height-yb+ys;
-
-        if (dWidth * dHeight / (w2 * h2) >= OVERLAP) {
-            return true;
-        }
-    }
-
-    return false;
 }

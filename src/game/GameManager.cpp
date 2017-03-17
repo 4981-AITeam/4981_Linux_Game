@@ -69,7 +69,7 @@ void GameManager::updateZombies(const float delta) {
     for (auto& z : zombieManager) {
         z.second.generateMove();
         if (z.second.isMoving()) {
-            z.second.move((z.second.getDX()*delta), (z.second.getDY()*delta), collisionHandler);
+            z.second.move((z.second.getDX() * delta), (z.second.getDY() * delta), collisionHandler);
         }
     }
 }
@@ -77,9 +77,9 @@ void GameManager::updateZombies(const float delta) {
 // Update turret actions.
 // Jamie, 2017-03-01.
 void GameManager::updateTurrets(const float delta) {
-	for (auto& t : turretManager) {
-		t.second.targetScanTurret();
-	}
+    for (auto& t : turretManager) {
+        t.second.targetScanTurret();
+    }
 }
 
 
@@ -178,8 +178,8 @@ bool GameManager::createZombie(SDL_Renderer* gRenderer, const float x, const flo
     }
 
     zombieManager.at(id).setPosition(x,y);
-    zombieManager.at(id).generatePath(x, y, MAP_WIDTH/2 - BASE_WIDTH, MAP_HEIGHT/2 - BASE_HEIGHT);
-    zombieManager.at(id).setState(ZOMBIE_MOVE);
+    zombieManager.at(id).generatePath(x, y, MAP_WIDTH / 2 - BASE_WIDTH, MAP_HEIGHT / 2 - BASE_HEIGHT);
+    zombieManager.at(id).setState(ZombieState::ZOMBIE_MOVE);
 
     return true;
 }
@@ -406,7 +406,7 @@ void GameManager::setBoundary(SDL_Renderer* gRenderer,
 }
 
 bool GameManager::createZombieWave(SDL_Renderer* gRenderer, const int n){
-    
+
     std::vector<Point> spawnPoints;
     spawnPoints.emplace_back(Point(-900, -900));
     spawnPoints.emplace_back(Point(1900, -900));
@@ -437,10 +437,4 @@ bool GameManager::createZombieWave(SDL_Renderer* gRenderer, const int n){
 
     return true;
 
-}
-
-// returns the list of zombies.
-// Jamie, 2017-03-01.
-const std::map<int32_t, Zombie>& GameManager::getZombies() {
-    return zombieManager;
 }
