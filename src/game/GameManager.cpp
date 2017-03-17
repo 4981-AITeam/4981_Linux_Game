@@ -178,7 +178,6 @@ bool GameManager::createZombie(SDL_Renderer* gRenderer, const float x, const flo
     }
 
     zombieManager.at(id).setPosition(x,y);
-    zombieManager.at(id).generatePath(x, y, MAP_WIDTH / 2 - BASE_WIDTH, MAP_HEIGHT / 2 - BASE_HEIGHT);
     zombieManager.at(id).setState(ZombieState::ZOMBIE_MOVE);
 
     return true;
