@@ -9,10 +9,10 @@
 using namespace std;
 
 Zombie::Zombie(int32_t id, const SDL_Rect &dest, const SDL_Rect &movementSize, const SDL_Rect &projectileSize,
-        const SDL_Rect &damageSize, int health, ZombieState state, int step, ZombieDirection dir, int frame)
+        const SDL_Rect &damageSize, int health, ZombieState state, int step, ZombieDirection dir, int frame, float range)
         : Entity(id, dest, movementSize, projectileSize, damageSize),
         Movable(id, dest, movementSize, projectileSize, damageSize, ZOMBIE_VELOCITY),
-        health(health), state(state), step(step), dir(dir), frame(frame) {
+        health(health), state(state), step(step), dir(dir), frame(frame), range(range) {
     logv("Create Zombie\n");
 }
 
@@ -213,6 +213,10 @@ void Zombie::generateMove() {
         return;
     }
 
+    // If can find a target, do not generate the next movement.
+    if (findTarget())
+        return;
+  
     // Each case will set direction and angle based on the next step in the path
     switch(direction) {
         case ZombieDirection::DIR_R:
@@ -408,3 +412,127 @@ string Zombie::generatePath(const Point& start, const Point& dest) {
 
     return ""; // no route found
 }
+
+// find a target.
+// if found a target, return true.
+// if not found a target, return false. In this case, the generateMove function need to generate the next movement.
+// Jamie, 2017-04-04.
+bool Zombie::findTarget() {
+    const auto& mapMarines = GameManager::instance()->getMarines();
+
+    int32_t closestMarineId = 0;
+    float closestMarineDist = std::numeric_limits<float>::max();
+
+    // Detect marines
+    bool detectMarine = false;
+    for (const auto& item : mapMarines) {
+        const auto& entity = item.second;
+        float entityX = entity.getX();
+        float entityY = entity.getY();
+
+        float xDelta = abs((abs(entityX - MARINE_WIDTH / 2) - abs(getX() - ZOMBIE_WIDTH / 2)));
+        float yDelta = abs((abs(entityY - MARINE_HEIGHT / 2) - abs(getY() - ZOMBIE_HEIGHT / 2)));
+        xDelta *= xDelta;
+        yDelta *= yDelta;
+        float distance = sqrt(xDelta + yDelta);
+
+        if (distance < getRange()) {
+            if (distance < closestMarineDist) {
+                closestMarineId = item.first;
+                closestMarineDist = distance;
+                detectMarine = true;
+            }
+        }
+    }
+
+    const auto& mapTurrets = GameManager::instance()->getTurrets();
+
+    int32_t closestTurretId = 0;
+    float closestTurretDist = std::numeric_limits<float>::max();
+
+    // Detect turrets
+    bool detectTurret = false;
+    for (const auto& item : mapTurrets)
+    {
+        const auto& entity = item.second;
+        float entityX = entity.getX();
+        float entityY = entity.getY();
+
+        float xDelta = abs((abs(entityX - TURRET_WIDTH / 2) - abs(getX() - ZOMBIE_WIDTH / 2)));
+        float yDelta = abs((abs(entityY - TURRET_HEIGHT / 2) - abs(getY() - ZOMBIE_HEIGHT / 2)));
+        xDelta *= xDelta;
+        yDelta *= yDelta;
+        float distance = sqrt(xDelta + yDelta);
+
+        if (distance < getRange()) {
+            if (distance < closestTurretDist) {
+                closestTurretId = item.first;
+                closestTurretDist = distance;
+                detectTurret = true;
+            }
+        }
+    }
+
+    // Go to a target;
+    if (detectMarine) {
+        const auto& target = mapMarines.find(closestMarineId);
+        if (target != mapMarines.end()) {
+            const float deltaX = getX() - target->second.getX();
+            const float deltaY = getY() - target->second.getY();
+
+            const double angle = ((atan2(deltaX, deltaY) * 180.0) / M_PI) * -1;
+            setAngle(angle);
+
+            // get the vector from this zombie to the target.
+            const float dirVecX = target->second.getX() - getX();
+            const float dirVecY = target->second.getY() - getY();
+
+            // calculate the velocity vector.
+            const float dirVecLen = sqrt(dirVecX * dirVecX + dirVecY * dirVecY);
+            const float velVecX = ZOMBIE_VELOCITY * (dirVecX / dirVecLen);
+            const float velVecY = ZOMBIE_VELOCITY * (dirVecY / dirVecLen);
+            setDX(velVecX);
+            setDY(velVecY);
+        }
+
+        return true;
+    }
+    else if (detectTurret) {
+        const auto& target = mapTurrets.find(closestTurretId);
+        if (target != mapTurrets.end()) {
+            const float deltaX = getX() - target->second.getX();
+            const float deltaY = getY() - target->second.getY();
+
+            double angle = ((atan2(deltaX, deltaY) * 180.0) / M_PI) * -1;
+            setAngle(angle);
+
+            float dirVecX = target->second.getX() - getX();
+            float dirVecY = target->second.getY() - getY();
+            float dirVecLen = sqrt(dirVecX * dirVecX + dirVecY * dirVecY);
+            float dirNorVecX = dirVecX / dirVecLen;
+            float dirNorVecY = dirVecY / dirVecLen;
+            float velVecX = ZOMBIE_VELOCITY * dirNorVecX;
+            float velVecY = ZOMBIE_VELOCITY * dirNorVecY;
+            setDX(velVecX);
+            setDY(velVecY);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+float Zombie::getRange() const {
+    return range;
+}
+
+/**
+ * Check to see if the zombie is still within the screen bounds before moving
+ * Fred Yang
+ * Feb 14
+ */
+constexpr bool Zombie::checkBounds(const float x, const float y) {
+    return (!(x < 0 || x > MAP_WIDTH || y < 0 || y > MAP_HEIGHT));
+}
+

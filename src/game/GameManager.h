@@ -64,9 +64,11 @@ public:
 
     // returns the list of zombies.
     // Jamie, 2017-03-01.
-    auto& getZombies() {
-        return zombieManager;
-    }
+    inline const auto& getZombies() { return zombieManager; }
+    // returns the list of marines. Jamie, 2017-Mar-27.
+    inline const auto& getMarines() { return marineManager; }
+    // returns the list of turrets. Jamie, 2017-Mar-27.
+    inline const auto& getTurrets() { return turretManager; }
 
     int32_t addObject(const Object&);
     void deleteObject(const int32_t id);

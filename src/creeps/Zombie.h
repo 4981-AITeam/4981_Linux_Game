@@ -74,7 +74,7 @@ class Zombie : public Movable {
 public:
     Zombie(int32_t id, const SDL_Rect &dest, const SDL_Rect &movementSize, const SDL_Rect &projectileSize,
         const SDL_Rect &damageSize, int health = ZOMBIE_INIT_HP, ZombieState state = ZombieState::ZOMBIE_IDLE,
-        int step = 0, ZombieDirection dir = ZombieDirection::DIR_INVALID, int frame = ZOMBIE_FRAMES);
+        int step = 0, ZombieDirection dir = ZombieDirection::DIR_INVALID, int frame = ZOMBIE_FRAMES, float range = 400.0f);
 
     virtual ~Zombie();
 
@@ -190,6 +190,14 @@ public:
         return frame;
     }
 
+    // returns the zombie's range.
+    // Jamie, 2017-03-27.
+    float getRange() const;
+
+    // find a target if not found, return false.
+    // Jamie, 2017-04-04.
+    bool findTarget();
+
 private:
     int health;         // health points of zombie
     std::string path;   // A* path zombie should follow
@@ -197,6 +205,7 @@ private:
     int step;           // Number of steps zombie has taken in path
     ZombieDirection dir;// moving direction
     int frame;          // frames per tile
+    float range;        // zombie's range.
 };
 
 #endif
